@@ -52,6 +52,10 @@ export default {
       })
         .setLngLat([lng, lat])
         .addTo(self.map)
+      marker.on('dragend', () => {
+        console.log('Dragged')
+        self.getRoute()
+      })
       self.markers = self.markers.length ? [...self.markers, marker] : [marker]
       self.getRoute()
     })
@@ -60,6 +64,7 @@ export default {
   },
   methods: {
     async getRoute() {
+      console.log('Getting Route 🤷‍♂️')
       const markerCoordinates = this.markers.reduce(
         (lngLatString, marker, index) => {
           const { lng, lat } = marker._lngLat
@@ -110,6 +115,9 @@ export default {
         })
       }
       // add turn instru
+    },
+    onDragEnd() {
+      this.getRoute()
     },
   },
 }
