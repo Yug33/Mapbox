@@ -1,5 +1,8 @@
 <template>
-  <div id="mapContainer" class="basemap"></div>
+  <div class="basemap">
+    <div id="mapContainer" class="basemap"></div>
+    <div id="clearButton" @click="removeMarkers">Clear</div>
+  </div>
 </template>
 
 <script>
@@ -119,6 +122,15 @@ export default {
     onDragEnd() {
       this.getRoute()
     },
+    removeMarkers() {
+      if (this.markers !== null) {
+        for (let i = this.markers.length - 1; i >= 0; i--) {
+          this.markers[i].remove()
+        }
+      }
+      this.map.removeLayer('route')
+      console.log('removed')
+    },
   },
 }
 </script>
@@ -128,5 +140,25 @@ export default {
 .basemap {
   width: 100%;
   height: 100%;
+}
+#clearButton {
+  position: absolute;
+  margin: 28px;
+  width: 50px;
+  bottom: 0;
+  text-align: center;
+  right: 20px;
+  font-weight: bold;
+  font-size: 0.8em;
+  padding: 7px 0px;
+  color: black;
+  background-color: rgba(255, 255, 255, 0.9);
+  font-family: sans-serif;
+  border-radius: 10%;
+  cursor: pointer;
+}
+#clearbutton:hover {
+  background-color: rgba(212, 68, 68, 0.9);
+  color: white;
 }
 </style>
