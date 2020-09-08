@@ -4,6 +4,7 @@
 
 <script>
 import mapboxgl from 'mapbox-gl'
+import { api } from '../api'
 // import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder'
 export default {
   name: 'BaseMap',
@@ -13,11 +14,16 @@ export default {
         'pk.eyJ1IjoieW9naTMzIiwiYSI6ImNrZXRkejhrajBkdnYzNGxoZXc4NGc5bjQifQ.19___kQj8FppDw5_I3uOGg',
       map: {},
       markers: [],
+      myLocation: {},
     }
   },
   mounted() {
     mapboxgl.accessToken = this.accessToken
-
+    navigator.geolocation.getCurrentPosition((position) => {
+      // this.markers[]
+      const { latitude, longitude } = position.coords
+      this.myLocation = { latitude, longitude }
+    })
     this.map = new mapboxgl.Map({
       container: 'mapContainer',
       style: 'mapbox://styles/mapbox/streets-v8',
@@ -38,19 +44,73 @@ export default {
     // })
     // this.map.addControl(geocoder, 'top-left')
 
-    const map = this.map
-    let markers = this.markers
+    const self = this
     this.map.on('click', function (e) {
       const { lat, lng } = e.lngLat.wrap()
       const marker = new mapboxgl.Marker({
         draggable: true,
       })
         .setLngLat([lng, lat])
-        .addTo(map)
-      markers = markers.length ? [...markers, marker] : [marker]
-      console.log(markers)
+        .addTo(self.map)
+      self.markers = self.markers.length ? [...self.markers, marker] : [marker]
+      self.getRoute()
     })
-    console.log(this.markers)
+
+    self.map.addControl(new mapboxgl.FullscreenControl())
+  },
+  methods: {
+    async getRoute() {
+      const markerCoordinates = this.markers.reduce(
+        (lngLatString, marker, index) => {
+          const { lng, lat } = marker._lngLat
+          if (!index) {
+            const { longitude, latitude } = this.myLocation
+            return `${longitude}%2C${latitude}%3B${lng}%2C${lat}`
+          }
+          return lngLatString + `%3B${lng}%2C${lat}`
+        },
+        ''
+      )
+
+      const response = await api.methods.getRoute(
+        markerCoordinates,
+        this.accessToken
+      )
+
+      this.getDirections(response.data)
+    },
+    getDirections(routeAPIData) {
+      const route = routeAPIData.routes[0].geometry.coordinates
+      const geojson = {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: route,
+        },
+      }
+      if (this.map.getSource('route')) {
+        this.map.getSource('route').setData(geojson)
+      } else {
+        // otherwise, make a new request
+        this.map.addLayer({
+          id: 'route',
+          type: 'line',
+          source: {
+            type: 'geojson',
+            data: {
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'LineString',
+                coordinates: geojson,
+              },
+            },
+          },
+        })
+      }
+      // add turn instru
+    },
   },
 }
 </script>
