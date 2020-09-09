@@ -6,7 +6,7 @@ const api = {
         const url = `https://api.mapbox.com/directions/v5/mapbox/${mode}/
           ${lagLatString}
           ?alternatives=true&geometries=geojson&steps=true&access_token=${accessToken}`
-        console.log(url)
+
         axios
           .get(url)
           .then((res) => {
@@ -14,10 +14,8 @@ const api = {
             resolve(res)
           })
           .catch((err) => {
-            console.log(err)
             reject(err)
           })
-        console.log('right way')
       })
     },
   },
