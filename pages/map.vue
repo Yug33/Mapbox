@@ -3,12 +3,12 @@
     <div id="mapContainer" class="basemap"></div>
     <div id="clearButton" @click="removeMarkers">❌Clear</div>
     <div v-if="duration" id="duration">
-      🚗 Time Required : {{ duration }} Minute
+      🚗 {{ mode }} Time Required : {{ duration }} Minute
     </div>
     <div v-if="markers.length" class="modes">
       <v-radio-group v-model="mode" column light>
-        <v-radio :label="`Walking 🚶‍♂️`" value="walking"></v-radio>
-        <v-radio :label="`Driving 🚗`" value="driving"></v-radio>
+        <v-radio label="Walking 🚶‍♂️" value="walking"></v-radio>
+        <v-radio label="Driving 🚗" value="driving"></v-radio>
       </v-radio-group>
     </div>
   </div>
