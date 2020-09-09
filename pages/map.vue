@@ -99,8 +99,10 @@ export default {
       }
       if (this.map.getSource('route')) {
         this.map.getSource('route').setData(geojson)
+        // console.log(this.map.getSource('route'), 'second time')
       } else {
         // otherwise, make a new request
+        // console.log('first time')
         this.map.addLayer({
           id: 'route',
           type: 'line',
@@ -117,19 +119,21 @@ export default {
           },
         })
       }
-      // add turn instru
+      this.map.getSource('route').setData(geojson)
     },
     onDragEnd() {
       this.getRoute()
     },
     removeMarkers() {
-      if (this.markers !== null) {
+      if (this.markers !== null && this.map.getSource('route')) {
         for (let i = this.markers.length - 1; i >= 0; i--) {
           this.markers[i].remove()
         }
+        this.markers.length = 0
+        this.map.removeLayer('route')
+        this.map.removeSource('route')
       }
-      this.map.removeLayer('route')
-      console.log('removed')
+      console.log(this, 'removed😢')
     },
   },
 }
