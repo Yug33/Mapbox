@@ -2,6 +2,9 @@
   <div class="basemap">
     <div id="mapContainer" class="basemap"></div>
     <div id="clearButton" @click="removeMarkers">Clear</div>
+    <div v-if="duration" id="duration">
+      🚗 Time Required :- {{ duration }} Minute
+    </div>
   </div>
 </template>
 
@@ -18,6 +21,7 @@ export default {
       map: {},
       markers: [],
       myLocation: {},
+      duration: 0,
     }
   },
   mounted() {
@@ -88,6 +92,7 @@ export default {
       this.getDirections(response.data)
     },
     getDirections(routeAPIData) {
+      this.duration = routeAPIData.routes[0].duration
       const route = routeAPIData.routes[0].geometry.coordinates
       const geojson = {
         type: 'Feature',
@@ -130,6 +135,7 @@ export default {
           this.markers[i].remove()
         }
         this.markers.length = 0
+        this.duration = 0
         this.map.removeLayer('route')
         this.map.removeSource('route')
       }
@@ -160,6 +166,22 @@ export default {
   font-family: sans-serif;
   border-radius: 10%;
   cursor: pointer;
+}
+#duration {
+  position: absolute;
+  margin: 28px;
+
+  top: 0;
+  text-align: center;
+  left: 20px;
+  font-weight: bold;
+  font-size: 0.8em;
+  padding: 10px 10px;
+  color: black;
+  background-color: rgba(255, 255, 255, 0.9);
+  font-family: sans-serif;
+  border-radius: 20px;
+  border: 2 solid rgb(40, 211, 253);
 }
 #clearbutton:hover {
   background-color: rgba(212, 68, 68, 0.9);
