@@ -2,20 +2,24 @@
   <div class="basemap" light>
     <div id="mapContainer" class="basemap"></div>
     <div class="layers">
-      <v-checkbox
-        v-model="layers.roads"
-        label="Roads"
-        light
-        value="roads"
-        @change="updateLayers('roads')"
-      ></v-checkbox>
-      <v-checkbox
-        v-model="layers.population"
-        label="Population"
-        light
-        value="population"
-        @change="updateLayers('population')"
-      ></v-checkbox>
+      <draggable
+        :list="myArray"
+        class="list-group"
+        ghost-class="ghost"
+        :move="checkMove"
+        @start="dragging = true"
+        @end="dragging = false"
+      >
+        <div v-for="element in myArray" :key="element.label">
+          <v-checkbox
+            v-model="element.state"
+            :label="`${element.label}`"
+            light
+            :value="element.value"
+            @change="updateLayers(element.value)"
+          ></v-checkbox>
+        </div>
+      </draggable>
     </div>
   </div>
 </template>
@@ -23,11 +27,16 @@
 <script>
 import mapboxgl from 'mapbox-gl'
 // eslint-disable-next-line no-unused-vars
+import draggable from 'vuedraggable'
 import roadsLayer from '../assets/ne_10m_roads.json'
 // eslint-disable-next-line no-unused-vars
 import populatedPlaces from '../assets/ne_10m_populated_places.json'
 export default {
   name: 'BaseMap',
+
+  components: {
+    draggable,
+  },
   data() {
     return {
       accessToken:
@@ -37,6 +46,10 @@ export default {
         roads: true,
         population: false,
       },
+      myArray: [
+        { label: 'Population', value: 'population', state: false },
+        { label: 'Roads', value: 'roads', state: false },
+      ],
     }
   },
 
@@ -65,93 +78,116 @@ export default {
   },
   methods: {
     updateLayers(event) {
-      console.log(event, this.layers[event], '<-letsee')
-      if (this.layers[event]) {
-        switch (event) {
-          case 'roads':
-            console.log('adding road')
-            this.addRoadsLayer()
-            break
-          case 'population':
-            this.addPopulationLayer()
-            break
-          default:
-            break
-        }
-      } else {
-        switch (event) {
-          case 'roads':
-            this.removeRaodLayer()
-            break
-          case 'population':
-            this.removePopulation()
-            break
+      console.log(this.myArray)
+      for (const layer of this.myArray) {
+        console.log(layer)
+        if (layer.state) {
+          switch (layer.value) {
+            case 'roads':
+              console.log('adding road')
+              this.addRoadsLayer()
+              break
+            case 'population':
+              this.addPopulationLayer()
+              break
+            default:
+              break
+          }
+        } else {
+          switch (layer.value) {
+            case 'roads':
+              this.removeRaodLayer()
+              break
+            case 'population':
+              this.removePopulation()
+              break
+          }
         }
       }
+      this.checkMove()
     },
     addRoadsLayer() {
       const self = this
-      self.map.addSource('roads', {
-        type: 'geojson',
-        data: roadsLayer,
-      })
-      self.map.addLayer({
-        id: 'route',
-        type: 'line',
-        source: 'roads',
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round',
-        },
-        paint: {
-          'line-color': '#888',
-          'line-width': 2,
-        },
-      })
+      if (!this.map.getSource('roads')) {
+        self.map.addSource('roads', {
+          type: 'geojson',
+          data: roadsLayer,
+        })
+        self.map.addLayer({
+          id: 'roads',
+          type: 'line',
+          source: 'roads',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round',
+          },
+          paint: {
+            'line-color': '#888',
+            'line-width': 2,
+          },
+        })
+      }
     },
     addPopulationLayer() {
       const self = this
-      self.map.addSource('points', {
-        type: 'geojson',
-        data: populatedPlaces,
-      })
+      if (!this.map.getSource('points')) {
+        self.map.addSource('points', {
+          type: 'geojson',
+          data: populatedPlaces,
+        })
 
-      self.map.addLayer({
-        id: 'population',
-        type: 'circle',
-        source: 'points',
-        paint: {
-          // make circles larger as the user zooms from z12 to z22
-          'circle-radius': {
-            property: 'POP_MAX',
-            stops: [
-              [0, 0],
-              [10000, 1],
-              [100000, 3.16],
-              [1000000, 10],
-              [10000000, 31.6],
-            ],
+        self.map.addLayer({
+          id: 'population',
+          type: 'circle',
+          source: 'points',
+          paint: {
+            // make circles larger as the user zooms from z12 to z22
+            'circle-radius': {
+              property: 'POP_MAX',
+              stops: [
+                [0, 0],
+                [10000, 1],
+                [100000, 3.16],
+                [1000000, 10],
+                [10000000, 31.6],
+              ],
+            },
+            // color circles by ethnicity, using a match expression
+            // https://docs.mapbox.com/mapbox-gl-js/style-spec/#expressions-match
+            'circle-color': '#223b53',
+            'circle-stroke-color': 'white',
+            'circle-stroke-width': 1,
+            'circle-opacity': 0.5,
           },
-          // color circles by ethnicity, using a match expression
-          // https://docs.mapbox.com/mapbox-gl-js/style-spec/#expressions-match
-          'circle-color': '#223b53',
-          'circle-stroke-color': 'white',
-          'circle-stroke-width': 1,
-          'circle-opacity': 0.5,
-        },
-      })
+        })
+      }
 
       console.log('pop data loaded 🤴')
     },
     removeRaodLayer() {
-      this.map.removeLayer('route')
-      this.map.removeSource('roads')
-      console.log(this.map.getSource('route'))
+      if (this.map.getSource('roads')) {
+        this.map.removeLayer('roads')
+        this.map.removeSource('roads')
+      }
+      console.log(this.map.getSource('roads'))
     },
     removePopulation() {
-      this.map.removeLayer('population')
-      this.map.removeSource('points')
+      if (this.map.getSource('points')) {
+        this.map.removeLayer('population')
+        this.map.removeSource('points')
+      }
       console.log(this.map.getSource('points'))
+    },
+    checkMove() {
+      console.log('in move', '🥞🥞')
+      if (this.map.getSource('roads') && this.map.getSource('points')) {
+        const ranks = this.myArray.reduce((rank, layer) => {
+          rank.push(layer.value)
+          return rank
+        }, [])
+        console.log(this.myArray)
+        this.map.moveLayer(ranks[0], ranks[1])
+      }
     },
   },
 }
