@@ -104,7 +104,7 @@ export default {
           }
         }
       }
-      this.checkMove()
+      this.checkMove(true)
     },
     addRoadsLayer() {
       const self = this
@@ -184,15 +184,19 @@ export default {
       }
       console.log(this.map.getSource('points'))
     },
-    checkMove() {
-      console.log('in move', '🥞🥞')
+    checkMove(toggle) {
+      console.log('in move', toggle, '🥞🥞')
       if (this.map.getSource('roads') && this.map.getSource('points')) {
         const ranks = this.myArray.reduce((rank, layer) => {
           rank.push(layer.value)
           return rank
         }, [])
         console.log(this.myArray)
-        this.map.moveLayer(ranks[0], ranks[1])
+        if (toggle === true) {
+          this.map.moveLayer(ranks[1], ranks[0])
+        } else {
+          this.map.moveLayer(ranks[0], ranks[1])
+        }
       }
     },
   },
