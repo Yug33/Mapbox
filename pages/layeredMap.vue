@@ -122,7 +122,13 @@ export default {
             'line-cap': 'round',
           },
           paint: {
-            'line-color': '#888',
+            'line-color': {
+              property: 'expressway',
+              stops: [
+                [0, '#888'],
+                [1, '#ff3'],
+              ],
+            },
             'line-width': 2,
           },
         })
